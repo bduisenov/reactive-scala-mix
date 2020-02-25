@@ -1,4 +1,4 @@
-package org.scalalang.boot.reactive;
+package org.springframework.boot.autoconfigure.web.reactive;
 
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientCodecCustomizer;

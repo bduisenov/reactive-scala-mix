@@ -1,4 +1,4 @@
-package org.scalalang.boot.reactive;
+package org.springframework.boot.autoconfigure.web.reactive;
 
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.support.GenericApplicationContext;

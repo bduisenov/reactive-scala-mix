@@ -1,4 +1,4 @@
-package org.scalalang.boot.reactive;
+package org.springframework.boot.autoconfigure.web.reactive;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.ApplicationContextInitializer;
