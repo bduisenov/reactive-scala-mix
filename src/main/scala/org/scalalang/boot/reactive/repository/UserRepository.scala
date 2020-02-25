@@ -15,8 +15,10 @@ trait UserRepository {
   def deleteAll()
 }
 
-class UserRepositoryImpl(private val cache: java.util.List[UserEntity] = new CopyOnWriteArrayList,
-                         private val seq: AtomicLong = new AtomicLong) extends UserRepository {
+class UserRepositoryImpl extends UserRepository {
+
+  private val cache: java.util.List[UserEntity] = new CopyOnWriteArrayList
+  private val seq: AtomicLong = new AtomicLong
 
   override def save(userEntity: UserEntity): UserEntity = {
     val x = userEntity.copy(id = Option(seq.incrementAndGet))
