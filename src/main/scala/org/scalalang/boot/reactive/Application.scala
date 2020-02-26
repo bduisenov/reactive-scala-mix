@@ -2,6 +2,8 @@ package org.scalalang.boot.reactive
 
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.scalalang.boot.reactive.controller.{UserController, UserControllerImpl}
+import org.scalalang.boot.reactive.core.document.Document
+import org.scalalang.boot.reactive.core.usecase.{GetUserUseCase, SaveUserUseCase}
 import org.scalalang.boot.reactive.repository.UserRepositoryImpl
 import org.scalalang.boot.reactive.service.UserServiceImpl
 import org.springframework.boot.SpringApplication
@@ -27,6 +29,9 @@ object Application {
       new JacksonJsonCodecInitializer(false),
       new ReactiveWebServerInitializer(new ServerProperties(), new ResourceProperties(), new WebFluxProperties(), new NettyReactiveWebServerFactory(8080)),
       (context => {
+        context.registerBean("getUserUseCase", classOf[GetUserUseCase[Document]])
+        context.registerBean("saveUserUseCase", classOf[SaveUserUseCase[Document]])
+
         context.registerBean(classOf[UserRepositoryImpl])
         context.registerBean(classOf[UserServiceImpl])
         context.registerBean(classOf[UserControllerImpl])
