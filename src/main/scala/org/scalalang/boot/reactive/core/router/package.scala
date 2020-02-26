@@ -35,7 +35,19 @@ package object router {
 
     def flatMap(fun: T => Either[P, T]): RouterBuilder[T, P] = {
       val name = fun.getClass.getSimpleName
-      new RouterBuilder[T, P](route.flatMap(thunk(State.pure(simple(either => either.flatMap(fun), name)))), routeContextConsumer)
+      val newRoute = route.flatMap(thunk(State.pure(simple(either => either.flatMap(fun), name))))
+
+      new RouterBuilder[T, P](newRoute, routeContextConsumer)
+    }
+
+    def recover(recoverFun: (T, P) => Either[P, T]): RouterBuilder[T, P] = {
+      val newRoute = route.flatMap(either => State(context => {
+        val recovered = either.fold(problem => recoverFun(context.state, problem), Right(_))
+
+        (context, recovered)
+      }))
+
+      new RouterBuilder[T, P](newRoute, routeContextConsumer)
     }
 
     def simple(function: Either[P, T] => Either[P, T], name: String): RouterFunction[T, P] =
@@ -61,4 +73,5 @@ package object router {
     def build(): Router[T, P] =
       new Router[T, P](initialState => route.run(new RouteContext[T, P](initialState)).value, routeContextConsumer)
   }
+
 }
