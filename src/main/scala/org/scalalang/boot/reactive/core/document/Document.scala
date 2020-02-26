@@ -42,6 +42,8 @@ sealed class Document private(private val xs: Map[String, Any])
   override def properties: Map[String, Any] = xs
 
   override def creator(xs: Map[String, Any]): this.type = new Document(xs).asInstanceOf[this.type]
+
+  override def toString: String = xs.toString
 }
 
 object Document {

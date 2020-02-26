@@ -2,9 +2,9 @@ package org.scalalang.boot.reactive.controller
 
 import java.net.URI
 
-import org.scalalang.boot.reactive.core.Router
 import org.scalalang.boot.reactive.core.document.Document
 import org.scalalang.boot.reactive.core.document.Document._
+import org.scalalang.boot.reactive.core.router.{RouteContext, Router}
 import org.scalalang.boot.reactive.repository.UserEntity
 import org.springframework.web.reactive.function.server.ServerResponse
 import reactor.core.publisher.Mono
@@ -19,10 +19,12 @@ class UserControllerImpl(private val getUserUseCase: Document => Either[String, 
                          private val saveUserUseCase: Document => Either[String, Document]) extends UserController {
 
   val getUserRoute: Document => Either[String, Document] = Router[Document, String](route => route
-    .flatMap(getUserUseCase))
+    .flatMap(getUserUseCase))()
 
   val createUserRoute: Document => Either[String, Document] = Router[Document, String](route => route
-    .flatMap(saveUserUseCase))
+    .flatMap(saveUserUseCase)) {
+    (routeContext: RouteContext[Document, String]) => println(routeContext)
+  }
 
   override def getUser(id: Long): Mono[ServerResponse] =
     getUserRoute(Document(userId -> id)) match {
