@@ -50,9 +50,9 @@ package object router {
       new RouterBuilder[T, P](newRoute, routeContextConsumer)
     }
 
-    def subRoute(subRoute: (RouterBuilder[T, P], Either[P, T]) => RouterBuilder[T, P]): RouterBuilder[T, P] = {
+    def nest(nestedRoute: (RouterBuilder[T, P], Either[P, T]) => RouterBuilder[T, P]): RouterBuilder[T, P] = {
       val newRoute = route.flatMap(either =>
-        subRoute(new RouterBuilder[T, P](routeContextConsumer), either).route)
+        nestedRoute(new RouterBuilder[T, P](routeContextConsumer), either).route)
 
       new RouterBuilder[T, P](newRoute, routeContextConsumer)
     }
