@@ -16,14 +16,18 @@ trait UserController {
 }
 
 class UserControllerImpl(private val getUserUseCase: Document => Either[String, Document],
+                         private val validateUserUseCase: Document => Either[String, Document],
+                         private val hashUserPasswordUseCase: Document => Either[String, Document],
                          private val saveUserUseCase: Document => Either[String, Document]) extends UserController {
 
   val getUserRoute: Document => Either[String, Document] = Router[Document, String](route => route
     .flatMap(getUserUseCase))()
 
   val createUserRoute: Document => Either[String, Document] = Router[Document, String](route => route
+    .flatMap(validateUserUseCase)
+    .flatMap(hashUserPasswordUseCase)
     .flatMap(saveUserUseCase)) {
-    (routeContext: RouteContext[Document, String]) => println(routeContext)
+    (routeContext: RouteContext[Document, String]) => routeContext.historyRecords.foreach(println)
   }
 
   override def getUser(id: Long): Mono[ServerResponse] =
@@ -35,7 +39,7 @@ class UserControllerImpl(private val getUserUseCase: Document => Either[String, 
     }
 
   override def saveUser(json: Map[String, String]): Mono[ServerResponse] =
-    createUserRoute(Document(user -> (() => UserEntity(name = json("name"))))) match {
+    createUserRoute(Document(user -> (() => UserEntity(name = json("name"), password = json("password"))))) match {
       case Right(doc) => doc.user.fold(ServerResponse.badRequest().bodyValue("not found")) {
         user => ServerResponse.created(URI.create(user.id.get.toString)).bodyValue(user)
       }

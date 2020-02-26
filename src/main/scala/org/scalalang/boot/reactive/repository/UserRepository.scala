@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import scala.jdk.OptionConverters._
 
-case class UserEntity(id: Option[Long] = None, name: String)
+case class UserEntity(id: Option[Long] = None, name: String, password: String)
 
 trait UserRepository {
   def save(userEntity: UserEntity): UserEntity

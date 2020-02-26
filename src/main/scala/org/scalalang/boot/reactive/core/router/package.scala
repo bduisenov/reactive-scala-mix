@@ -61,5 +61,4 @@ package object router {
     def build(): Router[T, P] =
       new Router[T, P](initialState => route.run(new RouteContext[T, P](initialState)).value, routeContextConsumer)
   }
-
 }

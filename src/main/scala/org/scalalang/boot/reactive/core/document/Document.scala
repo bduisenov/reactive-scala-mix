@@ -1,5 +1,6 @@
 package org.scalalang.boot.reactive.core.document
 
+import cats.Eval
 import org.scalalang.boot.reactive.repository.UserEntity
 
 import scala.reflect.ClassTag
@@ -12,6 +13,10 @@ sealed trait LiftedThunkDocument {
 
   def apply[T: ClassTag](key: String): Option[T] = properties.get(key) match {
     case Some(x) => x match {
+      case y: Eval[Any] => Try(y.value) match {
+        case Success(z: T) => Some(z)
+        case _ => None
+      }
       case y: (() => Any) => Try(y()) match {
         case Success(z: T) => Some(z)
         case _ => None
@@ -51,6 +56,9 @@ object Document {
   val userId = "userId"
   val user = "user"
 
-  def apply(elems: (String, Any)*) = new Document(Map.from(elems))
+  def apply(elems: (String, Any)*) = new Document(Map.from(elems).view.mapValues {
+    case f: (() => Any) => Eval.later(f())
+    case x => x
+  }.toMap)
 }
 
