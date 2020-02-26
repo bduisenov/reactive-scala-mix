@@ -6,7 +6,7 @@ import cats.data.State
 
 package object router {
 
-  sealed case class RouteHistoryRecord[T, P](private val in: T, private val out: Either[P, T], private val timeTakenNanos: Int)
+  sealed case class RouteHistoryRecord[T, P](private val in: T, private val out: Either[P, T], private val timeTakenNanos: Int, private val functionName: String)
 
   sealed case class RouteContext[T, P](state: T, historyRecords: List[RouteHistoryRecord[T, P]] = List())
 
@@ -25,11 +25,6 @@ package object router {
 
       (result, elapsed)
     }
-
-    def createRouteHistoryRecord(inArg: T, executionResult: (Either[P, T], Duration)): RouteHistoryRecord[T, P] = {
-      val (result, elapsed) = executionResult
-      new RouteHistoryRecord[T, P](inArg, result, elapsed.getNano)
-    }
   }
 
   sealed class RouterBuilder[T, P](val route: State[RouteContext[T, P], Either[P, T]],
@@ -38,27 +33,30 @@ package object router {
     def this(routeContextConsumer: RouteContext[T, P] => Unit) =
       this(State(context => (context, Right(context.state))), routeContextConsumer)
 
-    def flatMap(fun: T => Either[P, T]): RouterBuilder[T, P] =
-      new RouterBuilder[T, P](route.flatMap(thunk(State.pure(simple(either => either.flatMap(fun))))), routeContextConsumer)
+    def flatMap(fun: T => Either[P, T]): RouterBuilder[T, P] = {
+      val name = fun.getClass.getSimpleName
+      new RouterBuilder[T, P](route.flatMap(thunk(State.pure(simple(either => either.flatMap(fun), name)))), routeContextConsumer)
+    }
 
-    def simple(function: Either[P, T] => Either[P, T]): RouterFunction[T, P] =
+    def simple(function: Either[P, T] => Either[P, T], name: String): RouterFunction[T, P] =
       new RouterFunction[T, P] {
         override def internalApply(state: T, either: Either[P, T]): ExecutionContext[T, P] = {
-          val executionResult = execute(function, either)
-          val rhr = createRouteHistoryRecord(either.right.get, executionResult)
+          val (result, elapsed) = execute(function, either)
+          val rhr = new RouteHistoryRecord[T, P](either.right.get, result, elapsed.getNano, name)
 
-          (List(rhr), executionResult._1)
+          (List(rhr), result)
         }
       }
 
-    def thunk(stateM: State[RouteContext[T, P], RouterFunction[T, P]]): Either[P, T] => State[RouteContext[T, P], Either[P, T]] = either =>
-      stateM.flatMap(fun => State(context => {
-        val (historyRecords, result) = fun(context.state, either)
+    def thunk(state: State[RouteContext[T, P], RouterFunction[T, P]]): Either[P, T] => State[RouteContext[T, P], Either[P, T]] =
+      either =>
+        state.flatMap(function => State(context => {
+          val (newHistoryRecords, result) = function(context.state, either)
 
-        val updatedContext = new RouteContext[T, P](result.getOrElse(context.state), context.historyRecords ++ historyRecords)
+          val updatedContext = new RouteContext[T, P](result.getOrElse(context.state), context.historyRecords ++ newHistoryRecords)
 
-        (updatedContext, result)
-      }))
+          (updatedContext, result)
+        }))
 
     def build(): Router[T, P] =
       new Router[T, P](initialState => route.run(new RouteContext[T, P](initialState)).value, routeContextConsumer)
