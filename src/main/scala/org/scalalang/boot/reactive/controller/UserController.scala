@@ -1,10 +1,9 @@
 package org.scalalang.boot.reactive.controller
 
-import org.scalalang.boot.reactive.core.document.Attrs.{user, userId}
 import org.scalalang.boot.reactive.core.document.Document
+import org.scalalang.boot.reactive.core.document.Document._
 import org.scalalang.boot.reactive.core.usecase.UseCase
 import org.scalalang.boot.reactive.repository.UserEntity
-import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.server.ServerResponse
 import reactor.core.publisher.Mono
 
@@ -19,13 +18,15 @@ class UserControllerImpl(private val getUserUseCase: UseCase[Document],
 
   override def getUser(id: Long): Mono[ServerResponse] =
     getUserUseCase(Document(userId -> id)) match {
-      case Right(user) => ServerResponse.ok().bodyValue(user)
-      case Left(error) => ServerResponse.badRequest().body(BodyInserters.fromValue(error))
+      case Right(doc) => doc.user.fold(ServerResponse.badRequest().bodyValue("not found")) {
+        user => ServerResponse.ok().bodyValue(user)
+      }
+      case Left(error) => ServerResponse.badRequest().bodyValue(error)
     }
 
   override def saveUser(json: Map[String, String]): Mono[ServerResponse] =
     saveUserUseCase(Document(user -> (() => UserEntity(name = json("name"))))) match {
-      case Right(user) => ServerResponse.ok().bodyValue(user)
-      case Left(error) => ServerResponse.badRequest().body(BodyInserters.fromValue(error))
+      case Right(doc) => ServerResponse.ok().bodyValue(doc.user)
+      case Left(error) => ServerResponse.badRequest().bodyValue(error)
     }
 }

@@ -25,22 +25,17 @@ sealed trait LiftedThunkDocument {
 
 sealed trait HasUserId extends LiftedThunkDocument {
   self =>
-  def userId: Option[Long] = self[Long](Attrs.userId)
+  def userId: Option[Long] = self[Long](Document.userId)
 }
 
 sealed trait HasUser extends LiftedThunkDocument {
   self =>
-  def user: Option[UserEntity] = self[UserEntity](Attrs.user)
+  def user: Option[UserEntity] = self[UserEntity](Document.user)
 
-  def user(userEntity: UserEntity): this.type = creator(properties + (Attrs.user -> userEntity))
+  def user(userEntity: UserEntity): this.type = creator(properties + (Document.user -> userEntity))
 }
 
-object Attrs {
-  val userId = "userId"
-  val user = "user"
-}
-
-sealed class Document(private val xs: Map[String, Any])
+sealed class Document private(private val xs: Map[String, Any])
   extends HasUserId
     with HasUser {
 
@@ -50,6 +45,10 @@ sealed class Document(private val xs: Map[String, Any])
 }
 
 object Document {
+
+  val userId = "userId"
+  val user = "user"
+
   def apply(elems: (String, Any)*) = new Document(Map.from(elems))
 }
 
