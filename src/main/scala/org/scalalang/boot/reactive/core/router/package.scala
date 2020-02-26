@@ -27,8 +27,8 @@ package object router {
     }
   }
 
-  sealed class RouterBuilder[T, P](val route: State[RouteContext[T, P], Either[P, T]],
-                                   val routeContextConsumer: RouteContext[T, P] => Unit) {
+  sealed class RouterBuilder[T, P](private val route: State[RouteContext[T, P], Either[P, T]],
+                                   private val routeContextConsumer: RouteContext[T, P] => Unit) {
 
     def this(routeContextConsumer: RouteContext[T, P] => Unit) =
       this(State(context => (context, Right(context.state))), routeContextConsumer)
@@ -46,6 +46,13 @@ package object router {
 
         (context, recovered)
       }))
+
+      new RouterBuilder[T, P](newRoute, routeContextConsumer)
+    }
+
+    def subRoute(subRoute: (RouterBuilder[T, P], Either[P, T]) => RouterBuilder[T, P]): RouterBuilder[T, P] = {
+      val newRoute = route.flatMap(either =>
+        subRoute(new RouterBuilder[T, P](routeContextConsumer), either).route)
 
       new RouterBuilder[T, P](newRoute, routeContextConsumer)
     }

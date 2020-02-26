@@ -27,6 +27,10 @@ class UserControllerImpl(private val getUserUseCase: Document => Either[String, 
     .flatMap(validateUserUseCase)
     .flatMap(hashUserPasswordUseCase)
     .recover((lastState, _) => Right(lastState)) // if something happens, try to save anyway
+    .subRoute((subRoute, either) => either match {
+      case Right(_) => subRoute.flatMap(hashUserPasswordUseCase) // revert the changes to password
+      case _ => subRoute.flatMap(_ => Left("failed"))
+    })
     .flatMap(saveUserUseCase)) {
     (routeContext: RouteContext[Document, String]) => routeContext.historyRecords.foreach(println)
   }
