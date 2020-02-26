@@ -17,17 +17,15 @@ trait UserController {
 class UserControllerImpl(private val getUserUseCase: UseCase[Document],
                          private val saveUserUseCase: UseCase[Document]) extends UserController {
 
-  override def getUser(id: Long): Mono[ServerResponse] = {
+  override def getUser(id: Long): Mono[ServerResponse] =
     getUserUseCase(Document(userId -> id)) match {
       case Right(user) => ServerResponse.ok().bodyValue(user)
       case Left(error) => ServerResponse.badRequest().body(BodyInserters.fromValue(error))
     }
-  }
 
-  override def saveUser(json: Map[String, String]): Mono[ServerResponse] = {
+  override def saveUser(json: Map[String, String]): Mono[ServerResponse] =
     saveUserUseCase(Document(user -> (() => UserEntity(name = json("name"))))) match {
       case Right(user) => ServerResponse.ok().bodyValue(user)
       case Left(error) => ServerResponse.badRequest().body(BodyInserters.fromValue(error))
     }
-  }
 }
