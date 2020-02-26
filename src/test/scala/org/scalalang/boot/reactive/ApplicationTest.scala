@@ -30,7 +30,7 @@ class ApplicationTest {
 
   @Test
   def whenAValidJsonIsGivenThenReturnsTheIdOfACreatedResource(): Unit = {
-    val json = """{ "name": "Monika" }"""
+    val json = """{ "name": "Monika", "password": "some.pwd" }"""
 
     client.post().uri("/")
       .contentType(APPLICATION_JSON)
