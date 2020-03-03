@@ -26,19 +26,19 @@ class UserControllerImpl(private val getUserUseCase: UseCase[Document],
                          private val saveUserUseCase: UseCase[Document]) extends UserController {
   val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.parasitic
 
-  val getUserRoute: Document => EitherT[IO, String, Document] = Router[Document, String](route => route
+  val getUserRoute: Document => EitherT[IO, String, Document] = Router[String, Document](route => route
     .flatMap(getUserUseCase))()
 
-  val createUserRoute: Document => EitherT[IO, String, Document] = Router[Document, String](route => route
+  val createUserRoute: Document => EitherT[IO, String, Document] = Router[String, Document](route => route
     .flatMap(validateUserUseCase)
     .flatMap(hashUserPasswordUseCase)
-    .recover((lastState, _) => EitherT.rightT(lastState)) // if something happens, try to save anyway
+    .recover((_, lastState) => EitherT.rightT(lastState)) // if something happens, try to save anyway
     .nest((nestedRoute, either) => either match {
       case Right(_) => nestedRoute.flatMap(hashUserPasswordUseCase) // revert the changes to password
       case _ => nestedRoute.flatMap(_ => EitherT.leftT("failed"))
     })
     .flatMap(saveUserUseCase)) {
-    (routeContext: RouteContext[Document, String]) => routeContext.historyRecords.foreach(println)
+    (routeContext: RouteContext[String, Document]) => routeContext.historyRecords.foreach(println)
   }
 
   override def getUser(id: Long): Mono[ServerResponse] = {
