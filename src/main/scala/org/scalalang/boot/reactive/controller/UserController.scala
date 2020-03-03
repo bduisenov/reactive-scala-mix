@@ -32,7 +32,7 @@ class UserControllerImpl(private val getUserUseCase: UseCase[Document],
   val createUserRoute: Document => EitherT[IO, String, Document] = Router[String, Document](route => route
     .flatMap(validateUserUseCase)
     .flatMap(hashUserPasswordUseCase)
-    .recover((_, lastState) => EitherT.rightT(lastState)) // if something happens, try to save anyway
+    .recover((_, lastSuccessfulEither) => EitherT.rightT(lastSuccessfulEither)) // if something happens, try to save anyway
     .nest((nestedRoute, either) => either match {
       case Right(_) => nestedRoute.flatMap(hashUserPasswordUseCase) // revert the changes to password
       case _ => nestedRoute.flatMap(_ => EitherT.leftT("failed"))
