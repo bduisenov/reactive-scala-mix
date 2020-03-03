@@ -10,7 +10,7 @@ import org.scalalang.boot.reactive.core.router.{RouteContext, Router}
 import org.scalalang.boot.reactive.core.usecase.UseCase
 import org.scalalang.boot.reactive.repository.UserEntity
 import org.springframework.web.reactive.function.server.ServerResponse
-import org.springframework.web.reactive.function.server.ServerResponse.{badRequest, ok}
+import org.springframework.web.reactive.function.server.ServerResponse.{badRequest, created, ok}
 import reactor.core.publisher.Mono
 import reactor.core.scala.publisher.SMono.fromFuture
 
@@ -59,8 +59,8 @@ class UserControllerImpl(private val getUserUseCase: UseCase[Document],
 
 
     fromFuture(result)(ec).asJava().flatMap {
-      case Right(doc) => doc.user.fold(ServerResponse.badRequest().bodyValue("not found")) {
-        user => ServerResponse.created(URI.create(user.id.get.toString)).bodyValue(user)
+      case Right(doc) => doc.user.fold(badRequest().bodyValue("not found")) {
+        user => created(URI.create(user.id.get.toString)).bodyValue(user)
       }
       case Left(error) => badRequest().bodyValue(error)
     }
