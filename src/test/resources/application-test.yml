@@ -1,0 +1,5 @@
+postgres:
+  host: localhost
+  database: postgres
+  username: postgres
+  password: postgres

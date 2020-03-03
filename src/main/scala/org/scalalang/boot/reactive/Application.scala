@@ -1,10 +1,10 @@
 package org.scalalang.boot.reactive
 
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import org.scalalang.boot.reactive.configuration.DatabaseInitializer
 import org.scalalang.boot.reactive.controller.{UserController, UserControllerImpl}
 import org.scalalang.boot.reactive.core.document.Document
 import org.scalalang.boot.reactive.core.usecase.{GetUserUseCase, HashUserPasswordUseCase, SaveUserUseCase, ValidateUserUseCase}
-import org.scalalang.boot.reactive.repository.UserRepositoryImpl
 import org.scalalang.boot.reactive.service.{PasswordServiceImpl, UserServiceImpl}
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.WebApplicationType.REACTIVE
@@ -30,13 +30,13 @@ object Application {
       new JacksonInitializer(new JacksonProperties()),
       new JacksonJsonCodecInitializer(false),
       new ReactiveWebServerInitializer(new ServerProperties(), new ResourceProperties(), new WebFluxProperties(), new NettyReactiveWebServerFactory(8080)),
+      new DatabaseInitializer,
       (context => {
         context.registerBean("getUserUseCase", classOf[GetUserUseCase[Document]])
         context.registerBean("validateUserUseCase", classOf[ValidateUserUseCase[Document]])
         context.registerBean("hashUserPasswordUseCase", classOf[HashUserPasswordUseCase[Document]])
         context.registerBean("saveUserUseCase", classOf[SaveUserUseCase[Document]])
 
-        context.registerBean(classOf[UserRepositoryImpl])
         context.registerBean(classOf[UserServiceImpl])
         context.registerBean(classOf[PasswordServiceImpl])
         context.registerBean(classOf[UserControllerImpl])

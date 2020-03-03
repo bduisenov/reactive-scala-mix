@@ -7,9 +7,17 @@ import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.web.reactive.function.BodyInserters
+import org.testcontainers.containers.PostgreSQLContainer
 
 @TestInstance(Lifecycle.PER_CLASS)
 class ApplicationTest {
+
+  val postgresqlContainer = new SPostgreSQLContainer()
+    .withDatabaseName("postgres")
+    .withUsername("postgres")
+    .withPassword("postgres")
+    .withExposedPorts(5432)
+    .withInitScript("docker-entrypoint-initdb.d/schema.sql")
 
   val client: WebTestClient = WebTestClient.bindToServer().baseUrl("http://localhost:8080").build()
 
@@ -17,7 +25,18 @@ class ApplicationTest {
 
   @BeforeAll
   def beforeAll(): Unit = {
+    postgresqlContainer.start()
+    val postgresPort = postgresqlContainer.getMappedPort(5432)
+    System.setProperty("postgres.port", postgresPort.toString)
+
+    app.setAdditionalProfiles("test")
     context = app.run()
+  }
+
+  @AfterAll
+  def afterAll(): Unit = {
+    context.close()
+    postgresqlContainer.close()
   }
 
   @Test
@@ -39,8 +58,5 @@ class ApplicationTest {
       .expectStatus().is2xxSuccessful
   }
 
-  @AfterAll
-  def afterAll(): Unit = {
-    context.close()
-  }
+  class SPostgreSQLContainer() extends PostgreSQLContainer[SPostgreSQLContainer]()
 }
