@@ -3,6 +3,7 @@ package org.scalalang.boot.reactive.core.document
 import cats.Eval
 import org.scalalang.boot.reactive.repository.UserEntity
 
+import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.util.{Success, Try}
 
@@ -11,20 +12,17 @@ sealed trait LiftedThunkDocument {
 
   def creator(xs: Map[String, Any]): this.type
 
-  def apply[T: ClassTag](key: String): Option[T] = properties.get(key) match {
-    case Some(x) => x match {
-      case y: Eval[Any] => Try(y.value) match {
-        case Success(z: T) => Some(z)
-        case _ => None
-      }
-      case y: (() => Any) => Try(y()) match {
-        case Success(z: T) => Some(z)
-        case _ => None
-      }
+  def apply[T: ClassTag](key: String): Option[T] = {
+    @tailrec def apply0(x: Any): Option[T] = x match {
+      case y: Eval[Any] => apply0(Try(y.value))
+      case y: (() => Any) => apply0(Try(y()))
+      case Success(y) => apply0(y)
+      case Some(y) => apply0(y)
       case y: T => Some(y)
       case _ => None
     }
-    case _ => None
+
+    apply0(properties.get(key))
   }
 }
 
