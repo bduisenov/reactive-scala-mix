@@ -16,6 +16,8 @@ import org.springframework.boot.web.reactive.context.ReactiveWebServerApplicatio
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.context.{ApplicationContext, ApplicationContextInitializer}
 import org.springframework.web.reactive.function.server.{RouterFunction, ServerResponse}
+import reactor.blockhound.BlockHound
+import reactor.tools.agent.ReactorDebugAgent
 
 class Application
 
@@ -49,6 +51,9 @@ object Application {
   }
 
   def main(args: Array[String]): Unit = {
+    BlockHound.install()
+    ReactorDebugAgent.init()
+
     System.setProperty("spring.backgroundpreinitializer.ignore", "true")
     System.setProperty("spring.main.lazy-initialization", "true")
 
