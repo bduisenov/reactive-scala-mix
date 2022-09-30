@@ -16,7 +16,7 @@
 
     <properties>
         <java.version>14</java.version>
-        <scala.version>2.13.3</scala.version>
+        <scala.version>2.13.9</scala.version>
         <cats.version>2.1.1</cats.version>
         <testcontainers.version>1.14.3</testcontainers.version>
     </properties>
